@@ -2,136 +2,153 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>MAPA HOMICÍDIOS DEH CONTAGEM</title>
-
-<!-- Leaflet — carrega de múltiplas fontes com fallback automático -->
 <link id="leaflet-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
-<script>
-// Fallback de CSS se jsdelivr falhar
-(function(){
-  var l=document.getElementById('leaflet-css');
-  l.onerror=function(){
-    var s=document.createElement('link');
-    s.rel='stylesheet';
-    s.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.css';
-    document.head.appendChild(s);
-  };
-})();
-</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#080b12;color:#e2e8f0}
-header{height:52px;background:linear-gradient(135deg,#10131e,#1a0a0a);border-bottom:2px solid #7f1d1d;display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#080b12;color:#e2e8f0;-webkit-tap-highlight-color:transparent}
+header{height:52px;background:linear-gradient(135deg,#10131e,#1a0a0a);border-bottom:2px solid #7f1d1d;display:flex;align-items:center;padding:0 12px;gap:10px;flex-shrink:0;z-index:1500;position:relative}
 .logo{width:30px;height:30px;background:#e53e3e;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-.htitle{font-size:.9rem;font-weight:800;color:#fff;letter-spacing:.07em;text-transform:uppercase}
-.hsub{font-size:.58rem;color:#64748b;letter-spacing:.1em;text-transform:uppercase}
-.hbadge{background:#7f1d1d;border:1px solid #e53e3e;color:#fca5a5;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:3px;letter-spacing:.08em}
-.hactions{margin-left:auto;display:flex;gap:7px;align-items:center}
-.btn{cursor:pointer;border:none;border-radius:5px;font-size:.76rem;font-weight:700;padding:6px 11px;transition:opacity .15s;font-family:inherit}
+.htitle{font-size:.85rem;font-weight:800;color:#fff;letter-spacing:.05em;text-transform:uppercase;line-height:1.1}
+.hsub{font-size:.55rem;color:#64748b;letter-spacing:.08em;text-transform:uppercase}
+.hbadge{background:#7f1d1d;border:1px solid #e53e3e;color:#fca5a5;font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:3px;letter-spacing:.06em}
+.hactions{margin-left:auto;display:flex;gap:6px;align-items:center}
+.btn{cursor:pointer;border:none;border-radius:5px;font-size:.74rem;font-weight:700;padding:6px 10px;transition:opacity .15s;font-family:inherit}
 .btn:hover{opacity:.82}
 .btn-red{background:#e53e3e;color:#fff}
 .btn-dark{background:#1e2235;color:#94a3b8;border:1px solid #2d3148}
-.btn-sm{padding:4px 8px;font-size:.68rem}
-.main{display:flex;height:calc(100vh - 52px)}
-.sidebar{width:320px;background:#0d1020;border-right:1px solid #1e2235;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.btn-sm{padding:4px 7px;font-size:.66rem}
+.main{display:flex;height:calc(100vh - 52px);position:relative}
+/* TOGGLE SIDEBAR BUTTON */
+#toggle-sidebar{position:absolute;top:8px;left:8px;z-index:1200;background:#e53e3e;color:#fff;border:none;border-radius:7px;width:40px;height:40px;font-size:1.1rem;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
+/* SIDEBAR */
+.sidebar{width:330px;background:#0d1020;border-right:1px solid #1e2235;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:transform .25s ease,width .25s ease;min-height:0}
+.fpanel{flex:1;overflow-y:auto;padding:11px;-webkit-overflow-scrolling:touch;min-height:0}
+.sidebar.collapsed{width:0;border:none}
 .tabs{display:flex;border-bottom:1px solid #1e2235}
-.tab{flex:1;padding:9px 4px;text-align:center;font-size:.68rem;font-weight:800;color:#4a5568;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+.tab{flex:1;padding:9px 3px;text-align:center;font-size:.6rem;font-weight:800;color:#4a5568;cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.03em;text-transform:uppercase;transition:all .15s}
 .tab.on{color:#e53e3e;border-bottom-color:#e53e3e}
-.stats{display:flex;border-bottom:1px solid #1e2235;flex-shrink:0}
-.stat{flex:1;padding:7px 3px;text-align:center;border-right:1px solid #1e2235}
-.stat:last-child{border-right:none}
-.sv{font-size:1rem;font-weight:800;color:#f1f5f9;line-height:1}
-.sl{font-size:.58rem;color:#4a5568;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+/* SEARCH BAR */
+.searchbar{padding:8px 9px;border-bottom:1px solid #1e2235;flex-shrink:0}
+.searchbar input{width:100%;background:#111422;border:1px solid #1e2235;border-radius:6px;color:#e2e8f0;font-size:.78rem;padding:7px 10px;outline:none;font-family:inherit}
+.searchbar input:focus{border-color:#e53e3e}
+/* FILTERS */
 .filters{padding:7px 9px;border-bottom:1px solid #1e2235;display:flex;flex-wrap:wrap;gap:4px;flex-shrink:0}
-.fb{font-size:.66rem;padding:3px 8px;border-radius:999px;border:1px solid #1e2235;background:transparent;color:#64748b;cursor:pointer;transition:all .15s;font-family:inherit}
+.fb{font-size:.64rem;padding:3px 8px;border-radius:999px;border:1px solid #1e2235;background:transparent;color:#64748b;cursor:pointer;transition:all .15s;font-family:inherit}
 .fb.on{background:#e53e3e;border-color:#e53e3e;color:#fff}
-.clist{flex:1;overflow-y:auto;padding:7px}
+.filter-row{display:flex;gap:5px;padding:0 9px 7px;flex-shrink:0;border-bottom:1px solid #1e2235}
+.filter-row select{flex:1;background:#111422;border:1px solid #1e2235;border-radius:6px;color:#94a3b8;font-size:.68rem;padding:5px 7px;outline:none;font-family:inherit}
+.filter-row select:focus{border-color:#e53e3e}
+.clist{flex:1;overflow-y:auto;padding:7px;-webkit-overflow-scrolling:touch}
 .clist::-webkit-scrollbar{width:3px}
 .clist::-webkit-scrollbar-thumb{background:#1e2235;border-radius:3px}
 .card{background:#111422;border:1px solid #1e2235;border-radius:7px;padding:9px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
 .card:hover{border-color:#374151}
 .card.sel{border-color:#e53e3e;background:#1a0d0d}
 .ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
-.cid{font-size:.62rem;color:#4a5568;font-weight:700}
-.cd{font-size:.62rem;color:#4a5568}
+.cid{font-size:.6rem;color:#4a5568;font-weight:700}
+.cd{font-size:.6rem;color:#4a5568}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:2px}
-.dr{background:#e53e3e}.dy{background:#f6ad55}.dg{background:#48bb78}.db{background:#60a5fa}
+.dr{background:#e53e3e}.dy{background:#f6ad55}.dg{background:#60a5fa}
 .cv{font-size:.8rem;font-weight:700;color:#f1f5f9;margin-bottom:3px}
-.cm{font-size:.69rem;color:#4a5568}
+.cm{font-size:.68rem;color:#4a5568}
 .cm span{color:#64748b}
 .cact{display:flex;gap:4px;margin-top:6px;justify-content:flex-end}
-.fpanel{flex:1;overflow-y:auto;padding:11px}
+/* FORM */
 .fpanel::-webkit-scrollbar{width:3px}
 .fpanel::-webkit-scrollbar-thumb{background:#1e2235;border-radius:3px}
 .fg{margin-bottom:9px}
-label{display:block;font-size:.65rem;font-weight:700;color:#64748b;margin-bottom:3px;letter-spacing:.06em;text-transform:uppercase}
-input,select,textarea{width:100%;background:#111422;border:1px solid #1e2235;border-radius:5px;color:#e2e8f0;font-size:.78rem;padding:6px 8px;outline:none;transition:border-color .15s;font-family:inherit}
+label{display:block;font-size:.64rem;font-weight:700;color:#64748b;margin-bottom:3px;letter-spacing:.05em;text-transform:uppercase}
+input,select,textarea{width:100%;background:#111422;border:1px solid #1e2235;border-radius:5px;color:#e2e8f0;font-size:.82rem;padding:7px 8px;outline:none;transition:border-color .15s;font-family:inherit}
 input:focus,select:focus,textarea:focus{border-color:#e53e3e}
 textarea{resize:vertical;min-height:54px}
 select option{background:#111422}
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.sec{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#e53e3e;margin:11px 0 6px;display:flex;align-items:center;gap:5px}
+.sec{font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e53e3e;margin:11px 0 6px;display:flex;align-items:center;gap:5px}
 .sec::after{content:'';flex:1;height:1px;background:#1e2235}
-.hint{font-size:.64rem;color:#4a5568;margin-top:3px}
+.hint{font-size:.63rem;color:#4a5568;margin-top:3px;line-height:1.4}
 .hint a{color:#60a5fa;cursor:pointer;text-decoration:none}
-.fotobox{width:100%;height:130px;border:2px dashed #1e2235;border-radius:7px;background:#0d1020;display:flex;align-items:center;justify-content:center;color:#4a5568;font-size:.75rem;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
+.fotobox{width:100%;height:130px;border:2px dashed #1e2235;border-radius:7px;background:#0d1020;display:flex;align-items:center;justify-content:center;color:#4a5568;font-size:.74rem;cursor:pointer;position:relative;overflow:hidden;transition:border-color .15s}
 .fotobox:hover{border-color:#e53e3e}
 .fotobox img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:5px}
 .fotobox .fov{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s}
 .fotobox:hover .fov{opacity:1}
-.fremove{position:absolute;top:5px;right:5px;background:#e53e3e;border:none;border-radius:4px;color:#fff;font-size:.62rem;padding:2px 6px;cursor:pointer;font-family:inherit;font-weight:700;display:none}
+.fremove{position:absolute;top:5px;right:5px;background:#e53e3e;border:none;border-radius:4px;color:#fff;font-size:.6rem;padding:2px 6px;cursor:pointer;font-family:inherit;font-weight:700;display:none}
 /* MAP */
-#map{flex:1;background:#0d1117}
-/* Sobrepor estilo Leaflet para tema escuro */
+.map-wrap{flex:1;position:relative;display:flex;flex-direction:column;min-width:0}
+.map-top-bar{display:flex;justify-content:flex-end;align-items:center;padding:6px 10px 6px 56px;background:rgba(8,11,18,.9);border-bottom:1px solid #1e2235;flex-shrink:0;gap:6px;flex-wrap:wrap}
+.map-btns{display:flex;gap:5px;flex-wrap:wrap}
+.mctrl{background:#1e2235;border:1px solid #2d3148;color:#94a3b8;font-size:.66rem;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.mctrl.on{background:#e53e3e;border-color:#e53e3e;color:#fff}
+#map{position:absolute;inset:0;background:#0d1117}
 .leaflet-container{background:#0d1117 !important}
 .leaflet-control-zoom a{background:#111422 !important;color:#94a3b8 !important;border-color:#1e2235 !important}
 .leaflet-control-zoom a:hover{background:#1e2235 !important;color:#e2e8f0 !important}
-.leaflet-control-attribution{background:rgba(8,11,18,.8) !important;color:#4a5568 !important;font-size:.6rem !important}
+.leaflet-control-attribution{background:rgba(8,11,18,.8) !important;color:#4a5568 !important;font-size:.58rem !important}
 .leaflet-control-attribution a{color:#64748b !important}
-/* POPUP */
-.leaflet-popup-content-wrapper{background:#111422 !important;border:1px solid #2d3148 !important;border-radius:9px !important;color:#e2e8f0 !important;box-shadow:0 8px 32px rgba(0,0,0,.7) !important;min-width:220px}
+.leaflet-popup-content-wrapper{background:#111422 !important;border:1px solid #2d3148 !important;border-radius:9px !important;color:#e2e8f0 !important;box-shadow:0 8px 32px rgba(0,0,0,.7) !important;min-width:210px}
 .leaflet-popup-tip-container .leaflet-popup-tip{background:#111422 !important}
 .leaflet-popup-content{margin:12px 14px !important}
-.pu-title{font-size:.9rem;font-weight:800;color:#f1f5f9;margin-bottom:7px}
-.pu-row{font-size:.73rem;margin-bottom:3px;color:#64748b}
+.pu-title{font-size:.88rem;font-weight:800;color:#f1f5f9;margin-bottom:7px}
+.pu-row{font-size:.72rem;margin-bottom:3px;color:#64748b}
 .pu-row span{color:#cbd5e1}
 .pu-foto{width:100%;max-height:130px;object-fit:cover;border-radius:6px;margin:6px 0;border:1px solid #1e2235}
-.pu-badge{display:inline-block;font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:999px;margin-top:4px}
+.pu-badge{display:inline-block;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:999px;margin-top:4px}
 .br{background:rgba(229,62,62,.18);color:#fc8181;border:1px solid rgba(229,62,62,.3)}
 .by{background:rgba(246,173,85,.18);color:#f6ad55;border:1px solid rgba(246,173,85,.3)}
-.bgg{background:rgba(72,187,120,.18);color:#68d391;border:1px solid rgba(72,187,120,.3)}
-.bbl{background:rgba(96,165,250,.18);color:#93c5fd;border:1px solid rgba(96,165,250,.3)}
+.bgg{background:rgba(96,165,250,.18);color:#93c5fd;border:1px solid rgba(96,165,250,.3)}
 .pu-btn{display:block;width:100%;margin-top:8px;padding:5px;background:#e53e3e;color:#fff;border:none;border-radius:5px;font-size:.7rem;font-weight:700;cursor:pointer;font-family:inherit;text-align:center}
-/* MAP CONTROLS */
-.map-wrap{flex:1;position:relative;display:flex;flex-direction:column}
-.map-top-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(8,11,18,.9);border-bottom:1px solid #1e2235;flex-shrink:0;gap:8px;flex-wrap:wrap}
-.map-btns{display:flex;gap:5px}
-.mctrl{background:#1e2235;border:1px solid #2d3148;color:#94a3b8;font-size:.68rem;font-weight:700;padding:5px 9px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
-.mctrl.on{background:#e53e3e;border-color:#e53e3e;color:#fff}
-.map-status{font-size:.65rem;color:#4a5568;max-width:300px}
-/* LEGEND */
-.legend{position:absolute;bottom:28px;right:10px;z-index:1000;background:rgba(8,11,18,.92);border:1px solid #1e2235;border-radius:7px;padding:9px 12px;font-size:.7rem;color:#64748b;pointer-events:none}
-.ltitle{font-weight:800;color:#e2e8f0;margin-bottom:6px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
+.legend{position:absolute;bottom:26px;right:8px;z-index:1000;background:rgba(8,11,18,.92);border:1px solid #1e2235;border-radius:7px;padding:8px 11px;font-size:.68rem;color:#64748b;pointer-events:none}
+.ltitle{font-weight:800;color:#e2e8f0;margin-bottom:5px;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase}
 .li{display:flex;align-items:center;gap:6px;margin-bottom:3px}
-/* MODAL */
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:none;align-items:center;justify-content:center}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:none;align-items:center;justify-content:center;padding:12px}
 .ov.on{display:flex}
-.modal{background:#111422;border:1px solid #2d3148;border-radius:11px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;padding:20px}
+.modal{background:#111422;border:1px solid #2d3148;border-radius:11px;width:520px;max-width:100%;max-height:90vh;overflow-y:auto;padding:20px}
 .modal h2{font-size:.9rem;margin-bottom:12px;color:#f1f5f9}
 .mact{display:flex;gap:7px;margin-top:16px;justify-content:flex-end}
 .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px}
 .di label{margin-bottom:2px}
 .di .v{font-size:.78rem;color:#e2e8f0;font-weight:600;padding:4px 7px;background:#0d1020;border-radius:5px;min-height:26px}
-.dfoto{width:100%;max-height:200px;object-fit:cover;border-radius:7px;border:1px solid #1e2235;margin-bottom:9px}
-/* MAP ERROR BOX */
-#map-error{display:none;position:absolute;inset:0;z-index:500;background:#0d1117;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:20px}
-#map-error.show{display:flex}
-#map-error h3{color:#fc8181;font-size:.9rem}
-#map-error p{color:#64748b;font-size:.78rem;max-width:380px;line-height:1.5}
-/* TOAST */
-#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(60px);background:#48bb78;color:#fff;font-size:.78rem;font-weight:700;padding:8px 16px;border-radius:7px;z-index:3000;transition:transform .3s ease;white-space:nowrap}
+.dfoto{width:100%;max-height:240px;object-fit:cover;border-radius:7px;border:1px solid #1e2235;margin-bottom:9px}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(70px);background:#48bb78;color:#fff;font-size:.78rem;font-weight:700;padding:8px 16px;border-radius:7px;z-index:3000;transition:transform .3s ease;white-space:nowrap;max-width:90vw;text-align:center}
 .empty{text-align:center;color:#2d3148;padding:32px 14px;font-size:.8rem}
+/* SUSPEITOS GRID */
+.susp-grid{flex:1;overflow-y:auto;padding:8px;-webkit-overflow-scrolling:touch}
+.susp-grid::-webkit-scrollbar{width:3px}
+.susp-grid::-webkit-scrollbar-thumb{background:#1e2235;border-radius:3px}
+.susp-card{background:#111422;border:1px solid #1e2235;border-radius:8px;padding:9px;margin-bottom:7px;display:flex;gap:9px;cursor:pointer;transition:border-color .15s}
+.susp-card:hover{border-color:#374151}
+.susp-foto{width:54px;height:64px;object-fit:cover;border-radius:5px;flex-shrink:0;background:#0d1020;border:1px solid #1e2235}
+.susp-foto-ph{width:54px;height:64px;border-radius:5px;flex-shrink:0;background:#0d1020;border:1px solid #1e2235;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#2d3148}
+.susp-info{flex:1;min-width:0}
+.susp-nome{font-size:.82rem;font-weight:700;color:#f1f5f9;margin-bottom:2px}
+.susp-meta{font-size:.66rem;color:#64748b;margin-bottom:1px}
+.susp-meta span{color:#94a3b8}
+/* STATS */
+.stats-panel{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
+.stats-panel::-webkit-scrollbar{width:3px}
+.stats-panel::-webkit-scrollbar-thumb{background:#1e2235;border-radius:3px}
+.stat-big{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:14px}
+.stat-box{background:#111422;border:1px solid #1e2235;border-radius:8px;padding:11px 8px;text-align:center}
+.stat-box .n{font-size:1.5rem;font-weight:800;line-height:1}
+.stat-box .l{font-size:.58rem;color:#4a5568;text-transform:uppercase;letter-spacing:.04em;margin-top:4px}
+.stat-section{font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#e53e3e;margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+.stat-section::after{content:'';flex:1;height:1px;background:#1e2235}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.bar-lbl{font-size:.68rem;color:#94a3b8;width:74px;flex-shrink:0;text-align:right}
+.bar-track{flex:1;height:18px;background:#0d1020;border-radius:4px;overflow:hidden;position:relative}
+.bar-fill{height:100%;background:linear-gradient(90deg,#e53e3e,#f6ad55);border-radius:4px;transition:width .4s ease;min-width:2px}
+.bar-val{font-size:.66rem;color:#cbd5e1;width:28px;flex-shrink:0;font-weight:700}
+@media (max-width:760px){
+  .sidebar{position:absolute;top:0;left:0;height:100%;z-index:1100;width:86vw;max-width:340px;box-shadow:4px 0 24px rgba(0,0,0,.6)}
+  .sidebar.collapsed{transform:translateX(-100%);width:86vw;border-right:1px solid #1e2235}
+  #toggle-sidebar{display:flex}
+  .map-top-bar{padding-left:56px}
+  .htitle{font-size:.72rem}
+  .hsub{display:none}
+  .hbadge{display:none}
+}
 </style>
 </head>
 <body>
@@ -144,48 +161,65 @@ select option{background:#111422}
   </div>
   <span class="hbadge">USO RESTRITO</span>
   <div class="hactions">
-    <button class="btn btn-dark btn-sm" onclick="exportarDados()">⬇ Exportar</button>
-    <button class="btn btn-dark btn-sm" onclick="importarDados()">⬆ Importar</button>
+    <button class="btn btn-dark btn-sm" onclick="exportarDados()">⬇</button>
+    <button class="btn btn-dark btn-sm" onclick="importarDados()">⬆</button>
     <input type="file" id="importInput" accept=".json" style="display:none" onchange="processarImportacao(event)"/>
   </div>
 </header>
 
 <div class="main">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
+  <button id="toggle-sidebar" onclick="toggleSidebar()">☰</button>
+
+  <div class="sidebar" id="sidebar">
     <div class="tabs">
       <div class="tab on" id="tab-lista" onclick="mudarTab('lista')">📋 Casos</div>
       <div class="tab" id="tab-form" onclick="mudarTab('form')">➕ Cadastrar</div>
+      <div class="tab" id="tab-susp" onclick="mudarTab('susp')">🕵️ Suspeitos</div>
+      <div class="tab" id="tab-stats" onclick="mudarTab('stats')">📊 Estat.</div>
     </div>
-    <div class="stats" id="stats"></div>
+
+    <!-- ===== CASOS ===== -->
     <div id="panel-lista" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="searchbar">
+        <input type="text" id="busca-caso" placeholder="🔍 Buscar por vítima, autor, B.O., endereço…" oninput="renderLista()"/>
+      </div>
       <div class="filters">
         <button class="fb on" onclick="setFiltro('todos',this)">Todos</button>
-        <button class="fb" onclick="setFiltro('sem_suspeito',this)">🔴 Sem susp.</button>
-        <button class="fb" onclick="setFiltro('com_suspeito',this)">🟡 Com susp.</button>
-        <button class="fb" onclick="setFiltro('autor_identificado',this)">🟢 Autor ID</button>
-        <button class="fb" onclick="setFiltro('preso',this)">🔵 Preso</button>
+        <button class="fb" onclick="setFiltro('sem_suspeito',this)">🔴 Sem suspeito</button>
+        <button class="fb" onclick="setFiltro('com_suspeito',this)">🟡 Com suspeito</button>
+        <button class="fb" onclick="setFiltro('preso',this)">🔵 Preso/APFD</button>
+      </div>
+      <div class="filter-row">
+        <select id="filtro-aisp" onchange="renderLista();renderMapa()"><option value="">Todas AISP</option></select>
+        <select id="filtro-bairro" onchange="renderLista();renderMapa()"><option value="">Todos os bairros</option></select>
       </div>
       <div class="clist" id="clist"></div>
     </div>
-    <div id="panel-form" style="display:none;flex:1;overflow:hidden">
+
+    <!-- ===== CADASTRAR ===== -->
+    <div id="panel-form" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
       <div class="fpanel" id="fpanel">
         <div class="sec">📁 Identificação</div>
         <div class="fr">
           <div class="fg"><label>Data do Fato</label><input type="date" id="f-data"/></div>
           <div class="fg"><label>Hora</label><input type="time" id="f-hora"/></div>
         </div>
-        <div class="fg"><label>N° B.O. / Inquérito</label><input type="text" id="f-bo" placeholder="2024/001122"/></div>
+        <div class="fg"><label>N° B.O. / REDS / Inquérito</label><input type="text" id="f-bo" placeholder="2024/001122"/></div>
         <div class="fg"><label>Unidade</label><select id="f-unidade"><option value="">— Selecione —</option><option>DEH Contagem</option><option>DHPP BH</option><option>DP Contagem 1°</option><option>DP Contagem 2°</option><option>DP Contagem 3°</option><option>Outra</option></select></div>
+
         <div class="sec">📍 Local</div>
         <div class="fg"><label>Endereço</label><input type="text" id="f-end" placeholder="Rua, número — Contagem/MG"/></div>
-        <div class="fg"><label>Bairro</label><input type="text" id="f-bairro" placeholder="Ex: Ressaca, Eldorado…"/></div>
+        <div class="fr">
+          <div class="fg"><label>AISP (região)</label><input type="text" id="f-aisp" placeholder="Ex: AISP 49, 06…" list="aisp-list"/><datalist id="aisp-list"></datalist></div>
+          <div class="fg"><label>Bairro do fato</label><input type="text" id="f-bairro" placeholder="Ex: Ressaca" list="bairro-list"/><datalist id="bairro-list"></datalist></div>
+        </div>
         <div class="fr">
           <div class="fg"><label>Latitude</label><input type="number" id="f-lat" placeholder="-19.9322" step="any"/></div>
           <div class="fg"><label>Longitude</label><input type="number" id="f-lng" placeholder="-44.0536" step="any"/></div>
         </div>
-        <div class="hint">💡 Clique no mapa para capturar coordenadas automaticamente.<br>Ou: <a onclick="window.open('https://www.google.com/maps/@-19.9322,-44.0536,14z','_blank')">Abrir Google Maps</a> → botão direito → "O que há aqui?"</div>
+        <div class="hint">💡 Clique no mapa para capturar coordenadas. Ou <a onclick="window.open('https://www.google.com/maps/@-19.9322,-44.0536,14z','_blank')">abra o Google Maps</a>.</div>
         <div class="fg" style="margin-top:7px"><label>Tipo de Local</label><select id="f-tlocal"><option value="">—</option><option>Via pública</option><option>Residência</option><option>Estabelecimento comercial</option><option>Área de mata / baldio</option><option>Veículo</option><option>Outro</option></select></div>
+
         <div class="sec">🧑 Vítima</div>
         <div class="fg"><label>Nome</label><input type="text" id="f-vitima" placeholder="Nome completo ou 'Não identificado'"/></div>
         <div class="fr">
@@ -197,9 +231,11 @@ select option{background:#111422}
           <div class="fg"><label>CPF / RG</label><input type="text" id="f-cpfv" placeholder="Opcional"/></div>
         </div>
         <div class="fg"><label>Antecedentes / Vínculos</label><textarea id="f-antv" placeholder="Facção, envolvimento, vínculo c/ suspeito…"></textarea></div>
+
         <div class="sec">🔫 Dinâmica</div>
         <div class="fg"><label>Instrumento / Meio</label><select id="f-meio"><option value="">—</option><option>Arma de fogo — pistola</option><option>Arma de fogo — revólver</option><option>Arma de fogo — fuzil/rifle</option><option>Arma de fogo — espingarda</option><option>Arma de fogo — não identificada</option><option>Arma branca — faca</option><option>Arma branca — facão</option><option>Arma branca — outra</option><option>Espancamento</option><option>Estrangulamento</option><option>Atropelamento doloso</option><option>Asfixia</option><option>Outro</option><option>Não identificado</option></select></div>
-        <div class="fg"><label>Motivação aparente</label><select id="f-motiv"><option value="">—</option><option>Tráfico de drogas</option><option>Disputa territorial / facção</option><option>Execução / queima de arquivo</option><option>Latrocínio</option><option>Violência doméstica / feminicídio</option><option>Briga / desentendimento</option><option>Dívida</option><option>Vingança</option><option>A esclarecer</option><option>Outra</option></select></div>
+        <div class="fg"><label>Motivação / Causa presumida</label><select id="f-motiv"><option value="">—</option><option>Tráfico de drogas</option><option>Disputa territorial / facção</option><option>Execução / queima de arquivo</option><option>Latrocínio</option><option>Violência doméstica / feminicídio</option><option>Briga / desentendimento</option><option>Dívida</option><option>Vingança</option><option>Acerto de contas</option><option>Intolerância</option><option>A esclarecer</option><option>Outra</option></select></div>
+        <div class="fg"><label>Detalhamento da motivação (opcional)</label><textarea id="f-motivdet" placeholder="Contexto da causa presumida…"></textarea></div>
         <div class="fr">
           <div class="fg"><label>Facção / Grupo</label><input type="text" id="f-faccao" placeholder="CV, PCC, Bonde…"/></div>
           <div class="fg"><label>Nº Disparos</label><input type="text" id="f-disp" placeholder="Ex: 5 disparos"/></div>
@@ -208,20 +244,23 @@ select option{background:#111422}
           <div class="fg"><label>Câmeras próximas?</label><select id="f-cam"><option value="">—</option><option>Sim — imagens obtidas</option><option>Sim — sem imagens</option><option>Não identificadas</option><option>Não há</option></select></div>
           <div class="fg"><label>Veículo</label><input type="text" id="f-vei" placeholder="Cor, modelo, placa…"/></div>
         </div>
+
         <div class="sec">🕵️ Suspeito / Autor</div>
-        <div class="fg"><label>Status do Caso</label><select id="f-status"><option value="sem_suspeito">🔴 Sem suspeito</option><option value="com_suspeito">🟡 Suspeito identificado</option><option value="autor_identificado">🟢 Autor confirmado — solto</option><option value="preso">🔵 Autor preso / indiciado</option></select></div>
-        <div class="fg"><label>Nome / Alcunha</label><input type="text" id="f-susp" placeholder="Nome ou apelido"/></div>
+        <div class="fg"><label>Status do Caso</label><select id="f-status"><option value="sem_suspeito">🔴 Sem suspeito</option><option value="com_suspeito">🟡 Com suspeito</option><option value="preso">🔵 Preso / APFD</option></select></div>
+        <div class="fg"><label>Nome / Alcunha</label><input type="text" id="f-susp" placeholder="Nome ou apelido do autor"/></div>
         <div class="fr">
           <div class="fg"><label>Idade</label><input type="number" id="f-idadeS" placeholder="—" min="0" max="120"/></div>
           <div class="fg"><label>Sexo</label><select id="f-sexoS"><option value="">—</option><option>Masculino</option><option>Feminino</option></select></div>
         </div>
         <div class="fg"><label>CPF / RG suspeito</label><input type="text" id="f-cpfS" placeholder="Se identificado"/></div>
+        <div class="fg"><label>Qualificação do suspeito</label><select id="f-qualS"><option value="">—</option><option>Qualificado</option><option>Parcialmente qualificado</option><option>Não qualificado</option></select></div>
         <div class="fg"><label>Descrição física</label><textarea id="f-descS" placeholder="Altura, compleição, tatuagens, cicatrizes…"></textarea></div>
         <div class="fg"><label>Antecedentes criminais</label><textarea id="f-antS" placeholder="Passagens, mandados, facção…"></textarea></div>
+
         <div class="fg">
-          <label>📷 Foto do Suspeito / Autor</label>
+          <label>📷 Fotografia do Suspeito / Autor</label>
           <div class="fotobox" id="fotobox" onclick="document.getElementById('f-fotoinput').click()">
-            <span id="fotoplaceholder">📷 Clique para adicionar foto</span>
+            <span id="fotoplaceholder">📷 Clique para anexar fotografia</span>
             <img id="fotoimg" src="" alt="" style="display:none"/>
             <div class="fov">🔄 Trocar foto</div>
             <button class="fremove" id="fremove" onclick="event.stopPropagation();removerFoto()">✕</button>
@@ -229,10 +268,12 @@ select option{background:#111422}
           <input type="file" id="f-fotoinput" accept="image/*" style="display:none" onchange="carregarFoto(event)"/>
           <div class="hint">JPG ou PNG, máx. 2MB.</div>
         </div>
+
         <div class="fr">
-          <div class="fg"><label>Situação suspeito</label><select id="f-sitS"><option value="">—</option><option>Em fuga</option><option>Paradeiro desconhecido</option><option>Preso preventivamente</option><option>Preso — condenado</option><option>Solto — monitorado</option><option>Solto — sem restrição</option><option>Morto</option><option>Menor — Fundação CASA</option></select></div>
+          <div class="fg"><label>Situação suspeito</label><select id="f-sitS"><option value="">—</option><option>Em fuga</option><option>Paradeiro desconhecido</option><option>Preso preventivamente</option><option>Preso em flagrante (APFD)</option><option>Preso — condenado</option><option>Solto — monitorado</option><option>Solto — sem restrição</option><option>Morto</option><option>Menor — Fundação CASA</option></select></div>
           <div class="fg"><label>N° Mandado</label><input type="text" id="f-mand" placeholder="Se houver"/></div>
         </div>
+
         <div class="sec">📋 Inquérito</div>
         <div class="fg"><label>Fase atual</label><select id="f-fase"><option value="">—</option><option>Flagrante</option><option>Inquérito em andamento</option><option>Relatório final elaborado</option><option>Remetido ao MP</option><option>Denúncia oferecida</option><option>Em julgamento</option><option>Sentenciado</option><option>Arquivado</option></select></div>
         <div class="fr">
@@ -240,13 +281,33 @@ select option{background:#111422}
           <div class="fg"><label>Investigador(a)</label><input type="text" id="f-inv" placeholder="Nome"/></div>
         </div>
         <div class="fg"><label>Testemunhas</label><textarea id="f-test" placeholder="Nomes, qualificação, situação…"></textarea></div>
-        <div class="fg"><label>Observações gerais</label><textarea id="f-obs" placeholder="Informações adicionais, conexões, inteligência…"></textarea></div>
+        <div class="fg"><label>Observações gerais</label><textarea id="f-obs" placeholder="Informações adicionais, conexões…"></textarea></div>
+
         <div style="display:flex;gap:7px;margin-top:5px">
           <button class="btn btn-red" style="flex:1" onclick="salvarCaso()">✔ Salvar Caso</button>
           <button class="btn btn-dark" onclick="limparForm()">✕ Limpar</button>
         </div>
         <div style="height:18px"></div>
       </div>
+    </div>
+
+    <!-- ===== SUSPEITOS ===== -->
+    <div id="panel-susp" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="searchbar">
+        <input type="text" id="busca-susp" placeholder="🔍 Buscar suspeito/autor por nome ou alcunha…" oninput="renderSuspeitos()"/>
+      </div>
+      <div class="filters">
+        <button class="fb on" onclick="setFiltroSusp('todos',this)">Todos</button>
+        <button class="fb" onclick="setFiltroSusp('qualificado',this)">✅ Qualificados</button>
+        <button class="fb" onclick="setFiltroSusp('preso',this)">🔵 Presos</button>
+        <button class="fb" onclick="setFiltroSusp('fuga',this)">🏃 Em fuga</button>
+      </div>
+      <div class="susp-grid" id="susp-grid"></div>
+    </div>
+
+    <!-- ===== ESTATÍSTICAS ===== -->
+    <div id="panel-stats" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+      <div class="stats-panel" id="stats-panel"></div>
     </div>
   </div>
 
@@ -259,22 +320,14 @@ select option{background:#111422}
         <button class="mctrl" onclick="resetView()">🏠 Contagem</button>
         <button class="mctrl" id="btn-tile" onclick="alternarTile()">🗺️ Satélite</button>
       </div>
-      <div class="map-status" id="map-status">Clique no mapa para capturar coordenadas de um caso</div>
     </div>
     <div style="flex:1;position:relative">
       <div id="map"></div>
-      <div id="map-error">
-        <h3>⚠️ Mapa não carregado</h3>
-        <p>Não foi possível carregar os tiles do mapa. Isso pode acontecer em redes com restrições de acesso externo.</p>
-        <p style="margin-top:8px">Os <strong>pins e dados dos casos já estão funcionando</strong>. Para ver o mapa de fundo, acesse pelo GitHub Pages ou por uma rede sem restrições.</p>
-        <button class="btn btn-dark" style="margin-top:10px" onclick="tentarCarregarMapa()">🔄 Tentar novamente</button>
-      </div>
       <div class="legend">
         <div class="ltitle">Legenda</div>
         <div class="li"><span class="dot dr"></span>Sem suspeito</div>
-        <div class="li"><span class="dot dy"></span>Suspeito identificado</div>
-        <div class="li"><span class="dot dg"></span>Autor confirmado</div>
-        <div class="li"><span class="dot db"></span>Autor preso</div>
+        <div class="li"><span class="dot dy"></span>Com suspeito</div>
+        <div class="li"><span class="dot dg"></span>Preso / APFD</div>
       </div>
     </div>
   </div>
@@ -282,7 +335,7 @@ select option{background:#111422}
 
 <!-- MODAL DELETE -->
 <div class="ov" id="ov-del">
-  <div class="modal">
+  <div class="modal" style="width:420px">
     <h2>⚠️ Excluir caso?</h2>
     <p style="font-size:.8rem;color:#64748b">Esta ação não pode ser desfeita.</p>
     <div class="mact">
@@ -294,7 +347,7 @@ select option{background:#111422}
 
 <!-- MODAL DETALHE -->
 <div class="ov" id="ov-det">
-  <div class="modal" style="width:520px">
+  <div class="modal">
     <h2 id="det-title"></h2>
     <div id="det-body"></div>
     <div class="mact">
@@ -307,369 +360,292 @@ select option{background:#111422}
 <div id="toast"></div>
 
 <script>
-// ══ CARREGAR LEAFLET DINAMICAMENTE COM FALLBACKS ══════════════════════
-var leafletLoaded = false;
-var leafletSources = [
-  {
-    js:  'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js',
-    css: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css'
-  },
-  {
-    js:  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js',
-    css: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.css'
-  },
-  {
-    js:  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
-    css: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'
-  }
+// ══ CARREGAR LEAFLET COM FALLBACKS ══
+var leafletLoaded=false,currentSource=0;
+var leafletSources=[
+  {js:'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js',css:'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css'},
+  {js:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.js',css:'https://unpkg.com/leaflet@1.9.4/dist/leaflet.min.css'},
+  {js:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',css:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'}
 ];
-var currentSource = 0;
-var heatSources = [
-  'https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js',
-  'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js'
-];
+var heatSources=['https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js','https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js','https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js'];
+function carregarCSS(href){var ex=document.querySelector('link[data-leaflet]');if(ex)ex.remove();var l=document.createElement('link');l.rel='stylesheet';l.href=href;l.setAttribute('data-leaflet','1');document.head.appendChild(l)}
+function carregarScript(src,cb,err){var s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=err||function(){};document.head.appendChild(s)}
+function tentarCarregarMapa(){if(currentSource>=leafletSources.length)return;var src=leafletSources[currentSource];carregarCSS(src.css);carregarScript(src.js,function(){tentarHeat(0)},function(){currentSource++;tentarCarregarMapa()})}
+function tentarHeat(i){if(i>=heatSources.length){initMap(false);return}carregarScript(heatSources[i],function(){initMap(true)},function(){tentarHeat(i+1)})}
 
-function carregarCSS(href) {
-  var existing = document.querySelector('link[data-leaflet]');
-  if (existing) existing.remove();
-  var link = document.createElement('link');
-  link.rel = 'stylesheet'; link.href = href;
-  link.setAttribute('data-leaflet','1');
-  document.head.appendChild(link);
-}
+// ══ STATE ══
+var casos=[],filtro='todos',filtroSusp='todos',selId=null,delId=null,editId=null,fotoB64=null;
+var showHeat=true,showPins=true,map,heatLayer,markersGroup,heatAvailable=false,tileMode='dark',currentTileLayer=null;
+var sidebarCollapsed=false;
+try{casos=JSON.parse(localStorage.getItem('deh_casos')||'[]')}catch(e){}
 
-function carregarScript(src, cb, errCb) {
-  var s = document.createElement('script');
-  s.src = src;
-  s.onload = cb;
-  s.onerror = errCb || function(){};
-  document.head.appendChild(s);
-}
-
-function tentarCarregarMapa() {
-  document.getElementById('map-error').classList.remove('show');
-  if (currentSource >= leafletSources.length) {
-    document.getElementById('map-error').classList.add('show');
-    return;
-  }
-  var src = leafletSources[currentSource];
-  carregarCSS(src.css);
-  carregarScript(src.js, function() {
-    // Leaflet JS carregado — agora carregar heat plugin
-    tentarHeat(0);
-  }, function() {
-    currentSource++;
-    tentarCarregarMapa();
-  });
-}
-
-function tentarHeat(idx) {
-  if (idx >= heatSources.length) {
-    // Sem heat plugin, inicializa sem ele
-    initMap(false);
-    return;
-  }
-  carregarScript(heatSources[idx], function() {
-    initMap(true);
-  }, function() {
-    tentarHeat(idx + 1);
-  });
-}
-
-// ══ STATE ══════════════════════════════════════════════════════════════
-var casos = [];
-var filtro = 'todos';
-var selId  = null;
-var delId  = null;
-var editId = null;
-var fotoB64 = null;
-var showHeat = true;
-var showPins = true;
-var map, heatLayer, markersGroup;
-var heatAvailable = false;
-var tileMode = 'dark';
-
-try { casos = JSON.parse(localStorage.getItem('deh_casos') || '[]'); } catch(e){}
-
-// ══ INIT MAP ═══════════════════════════════════════════════════════════
-var CONTAGEM = [-19.9322, -44.0536];
-
-var TILES = {
-  dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>'
-  },
-  osm: {
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attr: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  },
-  satellite: {
-    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attr: '© Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP'
-  }
+// ══ MAP ══
+var CONTAGEM=[-19.9322,-44.0536];
+var TILES={
+  dark:{url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/attributions">CARTO</a>'},
+  osm:{url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attr:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'},
+  satellite:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',attr:'© Esri'}
 };
-
-var currentTileLayer = null;
-
-function initMap(hasHeat) {
-  heatAvailable = hasHeat;
-  leafletLoaded = true;
-
-  map = L.map('map', {
-    center: CONTAGEM,
-    zoom: 13,
-    zoomControl: true,
-    attributionControl: true
-  });
-
-  // Tenta tile escuro primeiro
-  currentTileLayer = L.tileLayer(TILES.dark.url, {
-    attribution: TILES.dark.attr,
-    maxZoom: 19,
-    subdomains: 'abcd'
-  });
-
-  currentTileLayer.on('tileerror', function() {
-    // Se tile escuro falhar, tenta OSM padrão
-    if (tileMode === 'dark') {
-      tileMode = 'osm';
-      map.removeLayer(currentTileLayer);
-      currentTileLayer = L.tileLayer(TILES.osm.url, {
-        attribution: TILES.osm.attr,
-        maxZoom: 19
-      });
-      currentTileLayer.addTo(map);
-      document.getElementById('map-status').textContent = 'Mapa carregado (modo padrão — tiles escuros bloqueados pela rede)';
-    }
-  });
-
+function initMap(hasHeat){
+  heatAvailable=hasHeat;leafletLoaded=true;
+  map=L.map('map',{center:CONTAGEM,zoom:13,zoomControl:true});
+  currentTileLayer=L.tileLayer(TILES.dark.url,{attribution:TILES.dark.attr,maxZoom:19,subdomains:'abcd'});
+  currentTileLayer.on('tileerror',function(){if(tileMode==='dark'){tileMode='osm';map.removeLayer(currentTileLayer);currentTileLayer=L.tileLayer(TILES.osm.url,{attribution:TILES.osm.attr,maxZoom:19});currentTileLayer.addTo(map)}});
   currentTileLayer.addTo(map);
-
-  markersGroup = L.layerGroup().addTo(map);
-
-  // Clique no mapa → captura coordenadas
-  map.on('click', function(e) {
-    var lat = e.latlng.lat.toFixed(6);
-    var lng = e.latlng.lng.toFixed(6);
-    document.getElementById('f-lat').value = lat;
-    document.getElementById('f-lng').value = lng;
-    mudarTab('form');
-    toast('📍 Coordenadas capturadas: ' + lat + ', ' + lng);
-  });
-
+  markersGroup=L.layerGroup().addTo(map);
+  map.on('click',function(e){var lat=e.latlng.lat.toFixed(6),lng=e.latlng.lng.toFixed(6);document.getElementById('f-lat').value=lat;document.getElementById('f-lng').value=lng;mudarTab('form');toast('📍 Coordenadas: '+lat+', '+lng)});
   renderMapa();
-  document.getElementById('map-status').textContent = 'Mapa de Contagem/MG carregado ✓ — Clique no mapa para capturar coordenadas';
+}
+function alternarTile(){
+  if(!map)return;map.removeLayer(currentTileLayer);
+  if(tileMode==='dark'||tileMode==='osm'){tileMode='satellite';document.getElementById('btn-tile').textContent='🌙 Escuro';currentTileLayer=L.tileLayer(TILES.satellite.url,{attribution:TILES.satellite.attr,maxZoom:19})}
+  else{tileMode='dark';document.getElementById('btn-tile').textContent='🗺️ Satélite';currentTileLayer=L.tileLayer(TILES.dark.url,{attribution:TILES.dark.attr,maxZoom:19,subdomains:'abcd'});currentTileLayer.on('tileerror',function(){map.removeLayer(currentTileLayer);currentTileLayer=L.tileLayer(TILES.osm.url,{attribution:TILES.osm.attr,maxZoom:19});currentTileLayer.addTo(map)})}
+  currentTileLayer.addTo(map);
+}
+function resetView(){if(map)map.setView(CONTAGEM,13)}
+function toggleHeat(){showHeat=!showHeat;document.getElementById('btn-heat').className='mctrl'+(showHeat?' on':'');renderMapa()}
+function togglePins(){showPins=!showPins;document.getElementById('btn-pins').className='mctrl'+(showPins?' on':'');renderMapa()}
+
+// ══ SIDEBAR TOGGLE (MOBILE) ══
+function toggleSidebar(){
+  sidebarCollapsed=!sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed',sidebarCollapsed);
+  document.getElementById('toggle-sidebar').textContent=sidebarCollapsed?'☰':'✕';
+  if(map)setTimeout(function(){map.invalidateSize()},280);
 }
 
-function alternarTile() {
-  if (!map) return;
-  map.removeLayer(currentTileLayer);
-  if (tileMode === 'dark' || tileMode === 'osm') {
-    tileMode = 'satellite';
-    document.getElementById('btn-tile').textContent = '🌙 Escuro';
-    currentTileLayer = L.tileLayer(TILES.satellite.url, { attribution: TILES.satellite.attr, maxZoom: 19 });
-  } else {
-    tileMode = 'dark';
-    document.getElementById('btn-tile').textContent = '🗺️ Satélite';
-    currentTileLayer = L.tileLayer(TILES.dark.url, { attribution: TILES.dark.attr, maxZoom: 19, subdomains: 'abcd' });
-    currentTileLayer.on('tileerror', function() {
-      map.removeLayer(currentTileLayer);
-      currentTileLayer = L.tileLayer(TILES.osm.url, { attribution: TILES.osm.attr, maxZoom: 19 });
-      currentTileLayer.addTo(map);
-    });
+// ══ PINS ══
+var PIN_C={sem_suspeito:'#e53e3e',com_suspeito:'#f6ad55',preso:'#60a5fa'};
+var STATUS_L={sem_suspeito:'🔴 Sem suspeito',com_suspeito:'🟡 Com suspeito',preso:'🔵 Preso / APFD'};
+var BADGE_C={sem_suspeito:'br',com_suspeito:'by',preso:'bgg'};
+var DOT_C={sem_suspeito:'dr',com_suspeito:'dy',preso:'dg'};
+function criarPin(color,grande){
+  var r=grande?12:9;
+  return L.divIcon({html:'<svg width="'+(r*2+4)+'" height="'+(r*2+r+4)+'" viewBox="0 0 '+(r*2+4)+' '+(r*2+r+4)+'" xmlns="http://www.w3.org/2000/svg"><filter id="s"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.6"/></filter><g filter="url(#s)"><circle cx="'+(r+2)+'" cy="'+(r+2)+'" r="'+r+'" fill="'+color+'" opacity="0.92"/><polygon points="'+(r+2-5)+','+(r+2+r*0.5)+' '+(r+2)+','+(r*2+r+2)+' '+(r+2+5)+','+(r+2+r*0.5)+'" fill="'+color+'" opacity="0.92"/><circle cx="'+(r+2)+'" cy="'+(r+2)+'" r="'+(r*0.38)+'" fill="rgba(255,255,255,0.82)"/></g></svg>',className:'',iconSize:[r*2+4,r*2+r+4],iconAnchor:[r+2,r*2+r+4],popupAnchor:[0,-(r*2+r+4)]});
+}
+
+// ══ FILTRO HELPERS ══
+function casoMatch(c){
+  if(filtro!=='todos'&&c.status!==filtro)return false;
+  var fa=document.getElementById('filtro-aisp').value;
+  var fb=document.getElementById('filtro-bairro').value;
+  if(fa&&(c.aisp||'')!==fa)return false;
+  if(fb&&(c.bairro||'')!==fb)return false;
+  var q=(document.getElementById('busca-caso').value||'').toLowerCase().trim();
+  if(q){
+    var hay=[c.vitima,c.suspeito,c.bo,c.endereco,c.bairro,c.aisp,c.faccao,c.motivacao].join(' ').toLowerCase();
+    if(hay.indexOf(q)===-1)return false;
   }
-  currentTileLayer.addTo(map);
+  return true;
 }
-
-function resetView() { if(map) map.setView(CONTAGEM, 13); }
-
-function toggleHeat() {
-  showHeat = !showHeat;
-  document.getElementById('btn-heat').className = 'mctrl' + (showHeat ? ' on' : '');
-  renderMapa();
-}
-function togglePins() {
-  showPins = !showPins;
-  document.getElementById('btn-pins').className = 'mctrl' + (showPins ? ' on' : '');
-  renderMapa();
-}
-
-// ══ PINOS CUSTOMIZADOS ════════════════════════════════════════════════
-var PIN_C = {sem_suspeito:'#e53e3e', com_suspeito:'#f6ad55', autor_identificado:'#48bb78', preso:'#60a5fa'};
-var STATUS_L = {sem_suspeito:'🔴 Sem suspeito', com_suspeito:'🟡 Suspeito ID', autor_identificado:'🟢 Autor confirmado', preso:'🔵 Autor preso'};
-var BADGE_C  = {sem_suspeito:'br', com_suspeito:'by', autor_identificado:'bgg', preso:'bbl'};
-var DOT_C    = {sem_suspeito:'dr', com_suspeito:'dy', autor_identificado:'dg', preso:'db'};
-
-function criarPin(color, grande) {
-  var r = grande ? 12 : 9;
-  return L.divIcon({
-    html: '<svg width="'+(r*2+4)+'" height="'+(r*2+r+4)+'" viewBox="0 0 '+(r*2+4)+' '+(r*2+r+4)+'" xmlns="http://www.w3.org/2000/svg">' +
-      '<filter id="s"><feDropShadow dx="0" dy="1" stdDeviation="2" flood-opacity="0.6"/></filter>' +
-      '<g filter="url(#s)">' +
-      '<circle cx="'+(r+2)+'" cy="'+(r+2)+'" r="'+r+'" fill="'+color+'" opacity="0.92"/>' +
-      '<polygon points="'+(r+2-5)+','+(r+2+r*0.5)+' '+(r+2)+','+(r*2+r+2)+' '+(r+2+5)+','+(r+2+r*0.5)+'" fill="'+color+'" opacity="0.92"/>' +
-      '<circle cx="'+(r+2)+'" cy="'+(r+2)+'" r="'+(r*0.38)+'" fill="rgba(255,255,255,0.82)"/>' +
-      '</g></svg>',
-    className: '',
-    iconSize: [r*2+4, r*2+r+4],
-    iconAnchor: [r+2, r*2+r+4],
-    popupAnchor: [0, -(r*2+r+4)]
+function filtrados(){return casos.filter(casoMatch)}
+function paraMapa(){
+  // mapa respeita status/aisp/bairro mas não a busca textual
+  var fa=document.getElementById('filtro-aisp').value;
+  var fb=document.getElementById('filtro-bairro').value;
+  return casos.filter(function(c){
+    if(filtro!=='todos'&&c.status!==filtro)return false;
+    if(fa&&(c.aisp||'')!==fa)return false;
+    if(fb&&(c.bairro||'')!==fb)return false;
+    return true;
   });
 }
 
-// ══ RENDER MAPA ═══════════════════════════════════════════════════════
-function renderMapa() {
-  if (!leafletLoaded || !map) return;
-
+// ══ RENDER MAPA ══
+function renderMapa(){
+  if(!leafletLoaded||!map)return;
   markersGroup.clearLayers();
-  var lista = filtrados();
-  var heatData = [];
-
-  lista.forEach(function(c) {
-    if (!c.lat || !c.lng) return;
-    var lat = parseFloat(c.lat), lng = parseFloat(c.lng);
-    heatData.push([lat, lng, 1]);
-
-    if (!showPins) return;
-
-    var col = PIN_C[c.status] || '#e53e3e';
-    var marker = L.marker([lat, lng], { icon: criarPin(col, selId === c.id) });
-
-    marker.bindPopup(
-      '<div class="pu-title">🔴 ' + (c.vitima || 'Vítima não ID') + '</div>' +
-      (c.foto ? '<img class="pu-foto" src="' + c.foto + '" alt="Foto suspeito"/>' : '') +
-      '<div class="pu-row">📅 <span>' + (c.data || '—') + ' ' + (c.hora || '') + '</span></div>' +
-      '<div class="pu-row">📍 <span>' + (c.bairro ? c.bairro + ' — ' : '') + (c.endereco || '—') + '</span></div>' +
-      (c.meio ? '<div class="pu-row">🔫 <span>' + c.meio + '</span></div>' : '') +
-      (c.motivacao ? '<div class="pu-row">⚡ <span>' + c.motivacao + '</span></div>' : '') +
-      '<hr style="border-color:#1e2235;margin:6px 0"/>' +
-      '<div class="pu-row">🕵️ <span>' + (c.suspeito || 'Não identificado') + '</span></div>' +
-      (c.faccao ? '<div class="pu-row">⚠️ Facção: <span>' + c.faccao + '</span></div>' : '') +
-      (c.sitSuspeito ? '<div class="pu-row">📌 <span>' + c.sitSuspeito + '</span></div>' : '') +
-      (c.bo ? '<div class="pu-row">📄 B.O.: <span>' + c.bo + '</span></div>' : '') +
-      '<div><span class="pu-badge ' + (BADGE_C[c.status] || 'br') + '">' + (STATUS_L[c.status] || c.status) + '</span></div>' +
-      '<button class="pu-btn" onclick="verDetalhe(\'' + c.id + '\')">📋 Ficha completa</button>',
-      { maxWidth: 290 }
-    );
-
-    marker.on('click', function() { selId = c.id; renderLista(); });
-    markersGroup.addLayer(marker);
+  var lista=paraMapa(),heatData=[];
+  lista.forEach(function(c){
+    if(!c.lat||!c.lng)return;
+    var lat=parseFloat(c.lat),lng=parseFloat(c.lng);
+    heatData.push([lat,lng,1]);
+    if(!showPins)return;
+    var col=PIN_C[c.status]||'#e53e3e';
+    var m=L.marker([lat,lng],{icon:criarPin(col,selId===c.id)});
+    m.bindPopup(
+      '<div class="pu-title">🔴 '+(c.vitima||'Vítima não ID')+'</div>'+
+      (c.foto?'<img class="pu-foto" src="'+c.foto+'" alt="Foto"/>':'')+
+      '<div class="pu-row">📅 <span>'+(c.data||'—')+' '+(c.hora||'')+'</span></div>'+
+      '<div class="pu-row">📍 <span>'+(c.bairro?c.bairro+' — ':'')+(c.endereco||'—')+'</span></div>'+
+      (c.aisp?'<div class="pu-row">🗺️ AISP: <span>'+c.aisp+'</span></div>':'')+
+      (c.meio?'<div class="pu-row">🔫 <span>'+c.meio+'</span></div>':'')+
+      (c.motivacao?'<div class="pu-row">⚡ <span>'+c.motivacao+'</span></div>':'')+
+      '<hr style="border-color:#1e2235;margin:6px 0"/>'+
+      '<div class="pu-row">🕵️ <span>'+(c.suspeito||'Não identificado')+'</span></div>'+
+      (c.faccao?'<div class="pu-row">⚠️ <span>'+c.faccao+'</span></div>':'')+
+      (c.sitSuspeito?'<div class="pu-row">📌 <span>'+c.sitSuspeito+'</span></div>':'')+
+      '<div><span class="pu-badge '+(BADGE_C[c.status]||'br')+'">'+(STATUS_L[c.status]||c.status)+'</span></div>'+
+      '<button class="pu-btn" onclick="verDetalhe(\''+c.id+'\')">📋 Ficha completa</button>',
+      {maxWidth:280});
+    m.on('click',function(){selId=c.id;renderLista()});
+    markersGroup.addLayer(m);
   });
-
-  // Mapa de calor
-  if (heatLayer) { try { map.removeLayer(heatLayer); } catch(e){} heatLayer = null; }
-  if (showHeat && heatAvailable && heatData.length && typeof L.heatLayer !== 'undefined') {
-    heatLayer = L.heatLayer(heatData, {
-      radius: 40, blur: 28, maxZoom: 17,
-      gradient: { 0.1: '#1d4ed8', 0.4: '#f59e0b', 0.65: '#ef4444', 1.0: '#7f1d1d' }
-    }).addTo(map);
+  if(heatLayer){try{map.removeLayer(heatLayer)}catch(e){}heatLayer=null}
+  if(showHeat&&heatAvailable&&heatData.length&&typeof L.heatLayer!=='undefined'){
+    heatLayer=L.heatLayer(heatData,{radius:40,blur:28,maxZoom:17,gradient:{0.1:'#1d4ed8',0.4:'#f59e0b',0.65:'#ef4444',1.0:'#7f1d1d'}}).addTo(map);
   }
 }
 
-// ══ UTILS ═════════════════════════════════════════════════════════════
-function salvar() { try { localStorage.setItem('deh_casos', JSON.stringify(casos)); } catch(e) { toast('⚠️ Armazenamento cheio. Exporte os dados.', 1); } }
-function gerarId() { return 'HC-' + Date.now().toString(36).toUpperCase(); }
-function toast(msg, err) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.style.background = err ? '#e53e3e' : '#48bb78';
-  t.style.transform = 'translateX(-50%) translateY(0)';
-  setTimeout(function() { t.style.transform = 'translateX(-50%) translateY(60px)'; }, 2800);
-}
-function filtrados() { return filtro === 'todos' ? casos : casos.filter(function(c) { return c.status === filtro; }); }
+// ══ UTILS ══
+function salvar(){try{localStorage.setItem('deh_casos',JSON.stringify(casos))}catch(e){toast('⚠️ Armazenamento cheio. Exporte os dados.',1)}}
+function gerarId(){return 'HC-'+Date.now().toString(36).toUpperCase()}
+function toast(msg,err){var t=document.getElementById('toast');t.textContent=msg;t.style.background=err?'#e53e3e':'#48bb78';t.style.transform='translateX(-50%) translateY(0)';setTimeout(function(){t.style.transform='translateX(-50%) translateY(70px)'},2800)}
 
-// ══ TABS / FILTROS ════════════════════════════════════════════════════
-function mudarTab(t) {
-  document.getElementById('tab-lista').className = 'tab' + (t === 'lista' ? ' on' : '');
-  document.getElementById('tab-form').className  = 'tab' + (t === 'form'  ? ' on' : '');
-  document.getElementById('panel-lista').style.display = t === 'lista' ? 'flex' : 'none';
-  document.getElementById('panel-form').style.display  = t === 'form'  ? 'block' : 'none';
-}
-function setFiltro(f, btn) {
-  filtro = f;
-  document.querySelectorAll('.fb').forEach(function(b) { b.classList.remove('on'); });
-  btn.classList.add('on');
-  renderLista(); renderMapa();
+// ══ TABS ══
+function mudarTab(t){
+  ['lista','form','susp','stats'].forEach(function(x){
+    document.getElementById('tab-'+x).className='tab'+(x===t?' on':'');
+    var p=document.getElementById('panel-'+x);
+    p.style.display=(x===t)?'flex':'none';
+  });
+  if(t==='susp')renderSuspeitos();
+  if(t==='stats')renderStats();
 }
 
-// ══ STATS ══════════════════════════════════════════════════════════════
-function renderStats() {
-  var t=casos.length, s=casos.filter(function(c){return c.status==='sem_suspeito'}).length,
-      c2=casos.filter(function(c){return c.status==='com_suspeito'}).length,
-      a=casos.filter(function(c){return c.status==='autor_identificado'}).length,
-      p=casos.filter(function(c){return c.status==='preso'}).length;
-  document.getElementById('stats').innerHTML =
-    '<div class="stat"><div class="sv">'+t+'</div><div class="sl">Total</div></div>' +
-    '<div class="stat"><div class="sv" style="color:#fc8181">'+s+'</div><div class="sl">Sem susp.</div></div>' +
-    '<div class="stat"><div class="sv" style="color:#f6ad55">'+c2+'</div><div class="sl">C/ susp.</div></div>' +
-    '<div class="stat"><div class="sv" style="color:#68d391">'+a+'</div><div class="sl">Autor ID</div></div>' +
-    '<div class="stat"><div class="sv" style="color:#93c5fd">'+p+'</div><div class="sl">Preso</div></div>';
+// ══ FILTROS ══
+function setFiltro(f,btn){filtro=f;document.querySelectorAll('#panel-lista .filters .fb').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');renderLista();renderMapa()}
+function setFiltroSusp(f,btn){filtroSusp=f;document.querySelectorAll('#panel-susp .filters .fb').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');renderSuspeitos()}
+
+// ══ POPULAR DROPDOWNS AISP/BAIRRO ══
+function popularFiltrosGeo(){
+  var aisps={},bairros={};
+  casos.forEach(function(c){if(c.aisp)aisps[c.aisp]=1;if(c.bairro)bairros[c.bairro]=1});
+  var aispArr=Object.keys(aisps).sort(),bairroArr=Object.keys(bairros).sort();
+  var fa=document.getElementById('filtro-aisp'),fb=document.getElementById('filtro-bairro');
+  var vaA=fa.value,vaB=fb.value;
+  fa.innerHTML='<option value="">Todas AISP</option>'+aispArr.map(function(a){return '<option>'+a+'</option>'}).join('');
+  fb.innerHTML='<option value="">Todos os bairros</option>'+bairroArr.map(function(b){return '<option>'+b+'</option>'}).join('');
+  fa.value=vaA;fb.value=vaB;
+  document.getElementById('aisp-list').innerHTML=aispArr.map(function(a){return '<option value="'+a+'">'}).join('');
+  document.getElementById('bairro-list').innerHTML=bairroArr.map(function(b){return '<option value="'+b+'">'}).join('');
 }
 
-// ══ LISTA ══════════════════════════════════════════════════════════════
-function renderLista() {
-  var lista = filtrados();
-  var el = document.getElementById('clist');
-  if (!lista.length) { el.innerHTML = '<div class="empty">🗂️<br><br>Nenhum caso.<br>Cadastre ou ajuste o filtro.</div>'; return; }
-  el.innerHTML = lista.slice().reverse().map(function(c) {
-    return '<div class="card' + (selId===c.id?' sel':'') + '" onclick="centralizarCaso(\''+c.id+'\')">'+
-      '<div class="ch"><div><div class="cid">'+c.id+(c.bo?' · '+c.bo:'')+'</div><div class="cd">'+(c.data||'—')+(c.hora?' · '+c.hora:'')+'</div></div>'+
-      '<span class="dot '+(DOT_C[c.status]||'dr')+'"></span></div>'+
+// ══ LISTA ══
+function renderLista(){
+  var lista=filtrados(),el=document.getElementById('clist');
+  if(!lista.length){el.innerHTML='<div class="empty">🗂️<br><br>Nenhum caso encontrado.<br>Ajuste a busca ou os filtros.</div>';return}
+  el.innerHTML=lista.slice().reverse().map(function(c){
+    return '<div class="card'+(selId===c.id?' sel':'')+'" onclick="centralizarCaso(\''+c.id+'\')">'+
+      '<div class="ch"><div><div class="cid">'+c.id+(c.bo?' · '+c.bo:'')+'</div><div class="cd">'+(c.data||'—')+(c.hora?' · '+c.hora:'')+'</div></div><span class="dot '+(DOT_C[c.status]||'dr')+'"></span></div>'+
       '<div class="cv">'+(c.vitima||'Vítima não identificada')+'</div>'+
-      (c.bairro?'<div class="cm">🏘️ <span>'+c.bairro+'</span></div>':'')+
+      (c.aisp||c.bairro?'<div class="cm">🗺️ <span>'+[c.aisp,c.bairro].filter(Boolean).join(' · ')+'</span></div>':'')+
       '<div class="cm">📍 <span>'+(c.endereco||'Não informado')+'</span></div>'+
       (c.suspeito?'<div class="cm">👤 <span>'+c.suspeito+'</span></div>':'')+
       (c.motivacao?'<div class="cm">⚡ <span>'+c.motivacao+'</span></div>':'')+
-      '<div class="cact">'+
-      '<button class="btn btn-dark btn-sm" onclick="event.stopPropagation();verDetalhe(\''+c.id+'\')">👁 Ver</button>'+
-      '<button class="btn btn-dark btn-sm" onclick="event.stopPropagation();editarCaso(\''+c.id+'\')">✏️</button>'+
-      '<button class="btn btn-sm" style="background:transparent;border:1px solid #1e2235;color:#fc8181;font-family:inherit;cursor:pointer;border-radius:5px" onclick="event.stopPropagation();pedirDelete(\''+c.id+'\')">🗑</button>'+
+      '<div class="cact"><button class="btn btn-dark btn-sm" onclick="event.stopPropagation();verDetalhe(\''+c.id+'\')">👁 Ver</button><button class="btn btn-dark btn-sm" onclick="event.stopPropagation();editarCaso(\''+c.id+'\')">✏️</button><button class="btn btn-sm" style="background:transparent;border:1px solid #1e2235;color:#fc8181;font-family:inherit;cursor:pointer;border-radius:5px" onclick="event.stopPropagation();pedirDelete(\''+c.id+'\')">🗑</button></div>'+
+      '</div>';
+  }).join('');
+}
+
+// ══ SUSPEITOS ══
+function renderSuspeitos(){
+  var q=(document.getElementById('busca-susp').value||'').toLowerCase().trim();
+  var lista=casos.filter(function(c){return c.suspeito&&c.suspeito.trim()});
+  lista=lista.filter(function(c){
+    if(filtroSusp==='qualificado'&&c.qualS!=='Qualificado')return false;
+    if(filtroSusp==='preso'&&c.status!=='preso')return false;
+    if(filtroSusp==='fuga'&&(c.sitSuspeito||'').toLowerCase().indexOf('fuga')===-1)return false;
+    if(q){var hay=[c.suspeito,c.descS,c.faccao,c.cpfS].join(' ').toLowerCase();if(hay.indexOf(q)===-1)return false}
+    return true;
+  });
+  var el=document.getElementById('susp-grid');
+  if(!lista.length){el.innerHTML='<div class="empty">🕵️<br><br>Nenhum suspeito encontrado.<br>Cadastre casos com autor identificado.</div>';return}
+  el.innerHTML=lista.slice().reverse().map(function(c){
+    return '<div class="susp-card" onclick="verDetalhe(\''+c.id+'\')">'+
+      (c.foto?'<img class="susp-foto" src="'+c.foto+'"/>':'<div class="susp-foto-ph">👤</div>')+
+      '<div class="susp-info">'+
+      '<div class="susp-nome">'+c.suspeito+'</div>'+
+      (c.qualS?'<div class="susp-meta">🏷️ <span>'+c.qualS+'</span></div>':'')+
+      (c.idadeS||c.sexoS?'<div class="susp-meta">'+[c.sexoS,c.idadeS?c.idadeS+' anos':''].filter(Boolean).join(' · ')+'</div>':'')+
+      (c.faccao?'<div class="susp-meta">⚠️ <span>'+c.faccao+'</span></div>':'')+
+      (c.sitSuspeito?'<div class="susp-meta">📌 <span>'+c.sitSuspeito+'</span></div>':'')+
+      '<div class="susp-meta">🔴 Vítima: <span>'+(c.vitima||'N/I')+'</span> · '+(c.bo||c.id)+'</div>'+
       '</div></div>';
   }).join('');
 }
 
-// ══ CENTRALIZAR ════════════════════════════════════════════════════════
-function centralizarCaso(id) {
-  var c = casos.find(function(x){return x.id===id;});
-  if (!c) return;
-  selId = id;
-  if (c.lat && c.lng && map) {
-    map.setView([parseFloat(c.lat), parseFloat(c.lng)], 17, {animate:true});
+// ══ ESTATÍSTICAS ══
+function semanaDoAno(d){var dt=new Date(d);var on=new Date(dt.getFullYear(),0,1);var dias=Math.floor((dt-on)/86400000);return Math.ceil((dias+on.getDay()+1)/7)}
+function renderStats(){
+  var el=document.getElementById('stats-panel');
+  var total=casos.length;
+  var presos=casos.filter(function(c){return c.status==='preso'}).length;
+  var com=casos.filter(function(c){return c.status==='com_suspeito'}).length;
+  var sem=casos.filter(function(c){return c.status==='sem_suspeito'}).length;
+  var elucid=total?Math.round((presos+com)/total*100):0;
+
+  // por ano
+  var anos={},meses={},semanas={};
+  var MES_NOME=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  casos.forEach(function(c){
+    if(!c.data)return;
+    var p=c.data.split('-');var ano=p[0],mes=parseInt(p[1],10);
+    anos[ano]=(anos[ano]||0)+1;
+    var chMes=ano+'-'+(mes<10?'0'+mes:mes);
+    meses[chMes]=(meses[chMes]||0)+1;
+    var sem2=semanaDoAno(c.data);
+    var chSem=ano+'-S'+(sem2<10?'0'+sem2:sem2);
+    semanas[chSem]=(semanas[chSem]||0)+1;
+  });
+
+  function barras(obj,fmtLabel,limite){
+    var keys=Object.keys(obj).sort().reverse();
+    if(limite)keys=keys.slice(0,limite);
+    var max=Math.max.apply(null,keys.map(function(k){return obj[k]}).concat([1]));
+    return keys.map(function(k){
+      var pct=Math.round(obj[k]/max*100);
+      return '<div class="bar-row"><div class="bar-lbl">'+fmtLabel(k)+'</div><div class="bar-track"><div class="bar-fill" style="width:'+pct+'%"></div></div><div class="bar-val">'+obj[k]+'</div></div>';
+    }).join('')||'<div style="color:#4a5568;font-size:.72rem;padding:6px">Sem dados com data preenchida.</div>';
   }
-  renderLista(); renderMapa();
-  if (c.lat && c.lng) {
-    setTimeout(function() {
-      markersGroup.eachLayer(function(layer) {
-        try {
-          var ll = layer.getLatLng();
-          if (Math.abs(ll.lat - parseFloat(c.lat)) < 0.0001 && Math.abs(ll.lng - parseFloat(c.lng)) < 0.0001) {
-            layer.openPopup();
-          }
-        } catch(e){}
-      });
-    }, 350);
-  }
+
+  el.innerHTML=
+    '<div class="stat-big">'+
+      '<div class="stat-box"><div class="n" style="color:#f1f5f9">'+total+'</div><div class="l">Total casos</div></div>'+
+      '<div class="stat-box"><div class="n" style="color:#93c5fd">'+presos+'</div><div class="l">Presos/APFD</div></div>'+
+      '<div class="stat-box"><div class="n" style="color:#68d391">'+elucid+'%</div><div class="l">Elucidação</div></div>'+
+    '</div>'+
+    '<div class="stat-big">'+
+      '<div class="stat-box"><div class="n" style="color:#fc8181">'+sem+'</div><div class="l">Sem suspeito</div></div>'+
+      '<div class="stat-box"><div class="n" style="color:#f6ad55">'+com+'</div><div class="l">Com suspeito</div></div>'+
+      '<div class="stat-box"><div class="n" style="color:#93c5fd">'+presos+'</div><div class="l">Preso/APFD</div></div>'+
+    '</div>'+
+    '<div class="stat-section">📅 Por Ano</div>'+barras(anos,function(k){return k})+
+    '<div class="stat-section">📆 Por Mês (últimos 12)</div>'+barras(meses,function(k){var p=k.split('-');return MES_NOME[parseInt(p[1],10)-1]+'/'+p[0].slice(2)},12)+
+    '<div class="stat-section">🗓️ Por Semana (últimas 12)</div>'+barras(semanas,function(k){return k.replace('-','/')},12)+
+    '<div style="height:18px"></div>';
 }
 
-// ══ DETALHE ════════════════════════════════════════════════════════════
-function verDetalhe(id) {
-  var c = casos.find(function(x){return x.id===id;}); if(!c) return;
-  document.getElementById('det-title').textContent = '📋 ' + (c.vitima||'Vítima não ID') + ' — ' + c.id;
-  document.getElementById('det-edit').onclick = function() { fecharOv('ov-det'); editarCaso(id); };
-  function r(l,v){ return v ? '<div class="di"><label>'+l+'</label><div class="v">'+v+'</div></div>' : ''; }
-  document.getElementById('det-body').innerHTML =
-    (c.foto ? '<img class="dfoto" src="'+c.foto+'" alt="Foto"/>' : '') +
-    '<div style="margin-bottom:7px"><span class="pu-badge '+(BADGE_C[c.status]||'br')+'">'+(STATUS_L[c.status]||c.status)+'</span></div>' +
-    '<div class="dgrid">'+r('Data',c.data)+r('Hora',c.hora)+r('B.O./Inquérito',c.bo)+r('Unidade',c.unidade)+r('Delegado(a)',c.delegado)+r('Investigador(a)',c.inv)+'</div>' +
-    '<div class="sec" style="margin-top:8px">Local</div>' +
-    '<div class="dgrid">'+r('Endereço',c.endereco)+r('Bairro',c.bairro)+r('Tipo de local',c.tlocal)+r('Coordenadas',c.lat&&c.lng?c.lat+', '+c.lng:'')+'</div>' +
-    '<div class="sec">Vítima</div>' +
-    '<div class="dgrid">'+r('Nome',c.vitima)+r('Idade',c.idade?c.idade+' anos':'')+r('Sexo',c.sexo)+r('Cor/Raça',c.raca)+r('CPF/RG',c.cpfv)+'</div>' +
+// ══ CENTRALIZAR ══
+function centralizarCaso(id){
+  var c=casos.find(function(x){return x.id===id});if(!c)return;
+  selId=id;
+  if(c.lat&&c.lng&&map)map.setView([parseFloat(c.lat),parseFloat(c.lng)],17,{animate:true});
+  renderLista();renderMapa();
+  if(window.innerWidth<=760&&!sidebarCollapsed)toggleSidebar();
+  if(c.lat&&c.lng)setTimeout(function(){markersGroup.eachLayer(function(layer){try{var ll=layer.getLatLng();if(Math.abs(ll.lat-parseFloat(c.lat))<0.0001&&Math.abs(ll.lng-parseFloat(c.lng))<0.0001)layer.openPopup()}catch(e){}})},350);
+}
+
+// ══ DETALHE ══
+function verDetalhe(id){
+  var c=casos.find(function(x){return x.id===id});if(!c)return;
+  document.getElementById('det-title').textContent='📋 '+(c.vitima||'Vítima não ID')+' — '+c.id;
+  document.getElementById('det-edit').onclick=function(){fecharOv('ov-det');editarCaso(id)};
+  function r(l,v){return v?'<div class="di"><label>'+l+'</label><div class="v">'+v+'</div></div>':''}
+  document.getElementById('det-body').innerHTML=
+    (c.foto?'<img class="dfoto" src="'+c.foto+'" alt="Foto"/>':'')+
+    '<div style="margin-bottom:7px"><span class="pu-badge '+(BADGE_C[c.status]||'br')+'">'+(STATUS_L[c.status]||c.status)+'</span></div>'+
+    '<div class="dgrid">'+r('Data',c.data)+r('Hora',c.hora)+r('B.O./Inquérito',c.bo)+r('Unidade',c.unidade)+r('Delegado(a)',c.delegado)+r('Investigador(a)',c.inv)+'</div>'+
+    '<div class="sec" style="margin-top:8px">Local</div>'+
+    '<div class="dgrid">'+r('Endereço',c.endereco)+r('AISP',c.aisp)+r('Bairro',c.bairro)+r('Tipo de local',c.tlocal)+r('Coordenadas',c.lat&&c.lng?c.lat+', '+c.lng:'')+'</div>'+
+    '<div class="sec">Vítima</div>'+
+    '<div class="dgrid">'+r('Nome',c.vitima)+r('Idade',c.idade?c.idade+' anos':'')+r('Sexo',c.sexo)+r('Cor/Raça',c.raca)+r('CPF/RG',c.cpfv)+'</div>'+
     (c.antv?'<div class="di"><label>Antecedentes vítima</label><div class="v">'+c.antv+'</div></div>':'')+
-    '<div class="sec">Dinâmica</div>' +
+    '<div class="sec">Dinâmica</div>'+
     '<div class="dgrid">'+r('Instrumento',c.meio)+r('Motivação',c.motivacao)+r('Facção/Grupo',c.faccao)+r('Disparos',c.disp)+r('Veículo',c.vei)+r('Câmeras',c.cam)+'</div>'+
-    '<div class="sec">Suspeito / Autor</div>' +
-    '<div class="dgrid">'+r('Nome/Alcunha',c.suspeito)+r('Idade',c.idadeS?c.idadeS+' anos':'')+r('Sexo',c.sexoS)+r('CPF/RG',c.cpfS)+r('Situação',c.sitSuspeito)+r('Mandado',c.mand)+'</div>'+
+    (c.motivdet?'<div class="di"><label>Detalhe motivação</label><div class="v">'+c.motivdet+'</div></div>':'')+
+    '<div class="sec">Suspeito / Autor</div>'+
+    '<div class="dgrid">'+r('Nome/Alcunha',c.suspeito)+r('Qualificação',c.qualS)+r('Idade',c.idadeS?c.idadeS+' anos':'')+r('Sexo',c.sexoS)+r('CPF/RG',c.cpfS)+r('Situação',c.sitSuspeito)+r('Mandado',c.mand)+'</div>'+
     (c.descS?'<div class="di"><label>Descrição física</label><div class="v">'+c.descS+'</div></div>':'')+
     (c.antS?'<div class="di"><label>Antecedentes</label><div class="v">'+c.antS+'</div></div>':'')+
     (c.fase?'<div class="sec">Andamento</div><div class="dgrid">'+r('Fase',c.fase)+'</div>':'')+
@@ -678,148 +654,78 @@ function verDetalhe(id) {
   document.getElementById('ov-det').classList.add('on');
 }
 
-// ══ FOTO ══════════════════════════════════════════════════════════════
-function carregarFoto(e) {
-  var f=e.target.files[0]; if(!f) return;
-  if(f.size>2097152){toast('Foto muito grande (máx 2MB)',1);return;}
-  var rd=new FileReader();
-  rd.onload=function(ev){
-    fotoB64=ev.target.result;
-    document.getElementById('fotoimg').src=fotoB64;
-    document.getElementById('fotoimg').style.display='block';
-    document.getElementById('fotoplaceholder').style.display='none';
-    document.getElementById('fremove').style.display='block';
-  };
-  rd.readAsDataURL(f); e.target.value='';
-}
-function removerFoto(){
-  fotoB64=null;
-  document.getElementById('fotoimg').src='';
-  document.getElementById('fotoimg').style.display='none';
-  document.getElementById('fotoplaceholder').style.display='block';
-  document.getElementById('fremove').style.display='none';
-}
+// ══ FOTO ══
+function carregarFoto(e){var f=e.target.files[0];if(!f)return;if(f.size>2097152){toast('Foto muito grande (máx 2MB)',1);return}var rd=new FileReader();rd.onload=function(ev){fotoB64=ev.target.result;document.getElementById('fotoimg').src=fotoB64;document.getElementById('fotoimg').style.display='block';document.getElementById('fotoplaceholder').style.display='none';document.getElementById('fremove').style.display='block'};rd.readAsDataURL(f);e.target.value=''}
+function removerFoto(){fotoB64=null;document.getElementById('fotoimg').src='';document.getElementById('fotoimg').style.display='none';document.getElementById('fotoplaceholder').style.display='block';document.getElementById('fremove').style.display='none'}
 
-// ══ SALVAR / EDITAR / LIMPAR ══════════════════════════════════════════
-function g(id){return document.getElementById(id).value;}
-function ss(id,v){try{document.getElementById(id).value=v||'';}catch(e){}}
-
-function salvarCaso() {
-  var lat=parseFloat(g('f-lat')), lng=parseFloat(g('f-lng'));
-  if(!g('f-vitima')&&!g('f-data')){toast('Preencha ao menos vítima ou data.',1);return;}
+// ══ SALVAR / EDITAR ══
+function g(id){return document.getElementById(id).value}
+function ss(id,v){try{document.getElementById(id).value=v||''}catch(e){}}
+function salvarCaso(){
+  var lat=parseFloat(g('f-lat')),lng=parseFloat(g('f-lng'));
+  if(!g('f-vitima')&&!g('f-data')){toast('Preencha ao menos vítima ou data.',1);return}
   var caso={
-    id:editId||gerarId(), data:g('f-data'), hora:g('f-hora'), bo:g('f-bo'), unidade:g('f-unidade'),
-    endereco:g('f-end'), bairro:g('f-bairro'), lat:isNaN(lat)?null:lat, lng:isNaN(lng)?null:lng, tlocal:g('f-tlocal'),
-    vitima:g('f-vitima'), idade:g('f-idade'), sexo:g('f-sexo'), raca:g('f-raca'), cpfv:g('f-cpfv'), antv:g('f-antv'),
-    meio:g('f-meio'), motivacao:g('f-motiv'), faccao:g('f-faccao'), disp:g('f-disp'), cam:g('f-cam'), vei:g('f-vei'),
-    status:g('f-status'), suspeito:g('f-susp'), idadeS:g('f-idadeS'), sexoS:g('f-sexoS'),
-    cpfS:g('f-cpfS'), descS:g('f-descS'), antS:g('f-antS'),
-    foto: fotoB64 || (editId ? (casos.find(function(c){return c.id===editId;})||{}).foto : null),
-    sitSuspeito:g('f-sitS'), mand:g('f-mand'), fase:g('f-fase'), delegado:g('f-del'), inv:g('f-inv'),
-    test:g('f-test'), obs:g('f-obs'),
-    criadoEm: editId ? (casos.find(function(c){return c.id===editId;})||{}).criadoEm : new Date().toISOString()
+    id:editId||gerarId(),data:g('f-data'),hora:g('f-hora'),bo:g('f-bo'),unidade:g('f-unidade'),
+    endereco:g('f-end'),aisp:g('f-aisp'),bairro:g('f-bairro'),lat:isNaN(lat)?null:lat,lng:isNaN(lng)?null:lng,tlocal:g('f-tlocal'),
+    vitima:g('f-vitima'),idade:g('f-idade'),sexo:g('f-sexo'),raca:g('f-raca'),cpfv:g('f-cpfv'),antv:g('f-antv'),
+    meio:g('f-meio'),motivacao:g('f-motiv'),motivdet:g('f-motivdet'),faccao:g('f-faccao'),disp:g('f-disp'),cam:g('f-cam'),vei:g('f-vei'),
+    status:g('f-status'),suspeito:g('f-susp'),idadeS:g('f-idadeS'),sexoS:g('f-sexoS'),cpfS:g('f-cpfS'),qualS:g('f-qualS'),descS:g('f-descS'),antS:g('f-antS'),
+    foto:fotoB64||(editId?(casos.find(function(c){return c.id===editId})||{}).foto:null),
+    sitSuspeito:g('f-sitS'),mand:g('f-mand'),fase:g('f-fase'),delegado:g('f-del'),inv:g('f-inv'),test:g('f-test'),obs:g('f-obs'),
+    criadoEm:editId?(casos.find(function(c){return c.id===editId})||{}).criadoEm:new Date().toISOString()
   };
-  if(editId){ casos[casos.findIndex(function(c){return c.id===editId;})]=caso; editId=null; toast('✅ Caso atualizado!'); }
-  else { casos.push(caso); toast('✅ Caso cadastrado!'); }
-  salvar(); limparForm(); renderTudo(); mudarTab('lista');
+  if(editId){casos[casos.findIndex(function(c){return c.id===editId})]=caso;editId=null;toast('✅ Caso atualizado!')}
+  else{casos.push(caso);toast('✅ Caso cadastrado!')}
+  salvar();limparForm();renderTudo();mudarTab('lista');
 }
-
 function limparForm(){
-  ['f-data','f-hora','f-bo','f-end','f-bairro','f-lat','f-lng','f-vitima','f-idade','f-cpfv','f-antv',
-   'f-faccao','f-disp','f-vei','f-susp','f-idadeS','f-cpfS','f-descS','f-antS','f-mand','f-del','f-inv','f-test','f-obs'
-  ].forEach(function(id){ss(id,'');});
-  ['f-unidade','f-tlocal','f-sexo','f-raca','f-meio','f-motiv','f-cam','f-status','f-sexoS','f-sitS','f-fase'
-  ].forEach(function(id){ss(id,'');});
-  ss('f-status','sem_suspeito');
-  removerFoto(); editId=null; fotoB64=null;
-  document.getElementById('fpanel').scrollTop=0;
+  ['f-data','f-hora','f-bo','f-end','f-aisp','f-bairro','f-lat','f-lng','f-vitima','f-idade','f-cpfv','f-antv','f-motivdet','f-faccao','f-disp','f-vei','f-susp','f-idadeS','f-cpfS','f-descS','f-antS','f-mand','f-del','f-inv','f-test','f-obs'].forEach(function(id){ss(id,'')});
+  ['f-unidade','f-tlocal','f-sexo','f-raca','f-meio','f-motiv','f-cam','f-status','f-sexoS','f-qualS','f-sitS','f-fase'].forEach(function(id){ss(id,'')});
+  ss('f-status','sem_suspeito');removerFoto();editId=null;fotoB64=null;document.getElementById('fpanel').scrollTop=0;
 }
-
 function editarCaso(id){
-  var c=casos.find(function(x){return x.id===id;}); if(!c) return;
-  editId=id;
+  var c=casos.find(function(x){return x.id===id});if(!c)return;editId=id;
   ss('f-data',c.data);ss('f-hora',c.hora);ss('f-bo',c.bo);ss('f-unidade',c.unidade);
-  ss('f-end',c.endereco);ss('f-bairro',c.bairro);ss('f-lat',c.lat);ss('f-lng',c.lng);ss('f-tlocal',c.tlocal);
+  ss('f-end',c.endereco);ss('f-aisp',c.aisp);ss('f-bairro',c.bairro);ss('f-lat',c.lat);ss('f-lng',c.lng);ss('f-tlocal',c.tlocal);
   ss('f-vitima',c.vitima);ss('f-idade',c.idade);ss('f-sexo',c.sexo);ss('f-raca',c.raca);ss('f-cpfv',c.cpfv);ss('f-antv',c.antv);
-  ss('f-meio',c.meio);ss('f-motiv',c.motivacao);ss('f-faccao',c.faccao);ss('f-disp',c.disp);ss('f-cam',c.cam);ss('f-vei',c.vei);
-  ss('f-status',c.status);ss('f-susp',c.suspeito);ss('f-idadeS',c.idadeS);ss('f-sexoS',c.sexoS);
-  ss('f-cpfS',c.cpfS);ss('f-descS',c.descS);ss('f-antS',c.antS);ss('f-sitS',c.sitSuspeito);ss('f-mand',c.mand);
-  ss('f-fase',c.fase);ss('f-del',c.delegado);ss('f-inv',c.inv);ss('f-test',c.test);ss('f-obs',c.obs);
-  if(c.foto){fotoB64=c.foto;document.getElementById('fotoimg').src=c.foto;document.getElementById('fotoimg').style.display='block';document.getElementById('fotoplaceholder').style.display='none';document.getElementById('fremove').style.display='block';}
-  else removerFoto();
-  mudarTab('form'); toast('✏️ Editando '+id);
+  ss('f-meio',c.meio);ss('f-motiv',c.motivacao);ss('f-motivdet',c.motivdet);ss('f-faccao',c.faccao);ss('f-disp',c.disp);ss('f-cam',c.cam);ss('f-vei',c.vei);
+  ss('f-status',c.status);ss('f-susp',c.suspeito);ss('f-idadeS',c.idadeS);ss('f-sexoS',c.sexoS);ss('f-cpfS',c.cpfS);ss('f-qualS',c.qualS);ss('f-descS',c.descS);ss('f-antS',c.antS);
+  ss('f-sitS',c.sitSuspeito);ss('f-mand',c.mand);ss('f-fase',c.fase);ss('f-del',c.delegado);ss('f-inv',c.inv);ss('f-test',c.test);ss('f-obs',c.obs);
+  if(c.foto){fotoB64=c.foto;document.getElementById('fotoimg').src=c.foto;document.getElementById('fotoimg').style.display='block';document.getElementById('fotoplaceholder').style.display='none';document.getElementById('fremove').style.display='block'}else removerFoto();
+  mudarTab('form');toast('✏️ Editando '+id);
 }
 
-// ══ DELETE ════════════════════════════════════════════════════════════
-function pedirDelete(id){delId=id;document.getElementById('ov-del').classList.add('on');}
-function confirmarDelete(){casos=casos.filter(function(c){return c.id!==delId;});salvar();fecharOv('ov-del');renderTudo();toast('🗑 Caso excluído.');}
-function fecharOv(id){document.getElementById(id).classList.remove('on');if(id==='ov-del')delId=null;}
+// ══ DELETE ══
+function pedirDelete(id){delId=id;document.getElementById('ov-del').classList.add('on')}
+function confirmarDelete(){casos=casos.filter(function(c){return c.id!==delId});salvar();fecharOv('ov-del');renderTudo();toast('🗑 Caso excluído.')}
+function fecharOv(id){document.getElementById(id).classList.remove('on');if(id==='ov-del')delId=null}
 
-// ══ EXPORT / IMPORT ═══════════════════════════════════════════════════
-function exportarDados(){
-  var blob=new Blob([JSON.stringify(casos,null,2)],{type:'application/json'});
-  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='DEH_Contagem_'+new Date().toISOString().slice(0,10)+'.json';a.click();
-  toast('⬇ Exportado!');
-}
-function importarDados(){document.getElementById('importInput').click();}
-function processarImportacao(e){
-  var f=e.target.files[0];if(!f)return;
-  var rd=new FileReader();
-  rd.onload=function(ev){
-    try{var d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;casos=d;salvar();renderTudo();toast('✅ '+d.length+' casos importados!');}
-    catch(e2){toast('Arquivo inválido.',1);}
-  };
-  rd.readAsText(f);e.target.value='';
-}
+// ══ EXPORT/IMPORT ══
+function exportarDados(){var blob=new Blob([JSON.stringify(casos,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DEH_Contagem_'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('⬇ Exportado!')}
+function importarDados(){document.getElementById('importInput').click()}
+function processarImportacao(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(ev){try{var d=JSON.parse(ev.target.result);if(!Array.isArray(d))throw 0;casos=d;salvar();renderTudo();toast('✅ '+d.length+' casos importados!')}catch(e2){toast('Arquivo inválido.',1)}};rd.readAsText(f);e.target.value=''}
 
-// ══ RENDER TUDO ════════════════════════════════════════════════════════
-function renderTudo(){ renderStats(); renderLista(); renderMapa(); }
+// ══ RENDER TUDO ══
+function renderTudo(){popularFiltrosGeo();renderLista();renderMapa();if(document.getElementById('panel-susp').style.display!=='none')renderSuspeitos();if(document.getElementById('panel-stats').style.display!=='none')renderStats()}
 
-// ══ DADOS DE EXEMPLO ══════════════════════════════════════════════════
-if (!casos.length) {
+// ══ EXEMPLOS ══
+if(!casos.length){
   casos=[
-    {id:'HC-EX001',data:'2024-02-14',hora:'23:10',bo:'2024/020145',unidade:'DEH Contagem',
-     endereco:'Rua Ametista, 78',bairro:'Ressaca',tlocal:'Via pública',lat:-19.951,lng:-44.078,
-     vitima:'Não identificado',idade:'',sexo:'Masculino',raca:'Parda',antv:'Possível envolvimento com tráfico',
-     meio:'Arma de fogo — pistola',motivacao:'Disputa territorial / facção',faccao:'A esclarecer',
-     disp:'4 disparos',cam:'Sim — sem imagens',vei:'Moto preta sem placa',
-     status:'sem_suspeito',suspeito:'',foto:null,sitSuspeito:'',mand:'',
-     fase:'Inquérito em andamento',delegado:'Dr. Marcos Lima',inv:'Ag. Renata Souza',
-     test:'2 testemunhas hostis',obs:'Corpo encontrado por moradores.',criadoEm:new Date().toISOString()},
-    {id:'HC-EX002',data:'2024-03-22',hora:'01:40',bo:'2024/033298',unidade:'DEH Contagem',
-     endereco:'Av. Rui Barbosa, esq. R. das Flores',bairro:'Eldorado',tlocal:'Via pública',lat:-19.928,lng:-44.062,
-     vitima:'Reginaldo F. dos Santos',idade:'31',sexo:'Masculino',raca:'Parda',antv:'Passagens por tráfico',
-     meio:'Arma de fogo — revólver',motivacao:'Execução / queima de arquivo',faccao:'Bonde dos 40',
-     disp:'7 disparos',cam:'Sim — imagens obtidas',vei:'VW Gol branco BHM-2244',
-     status:'com_suspeito',suspeito:'Marcelo "Magrão" Alves',idadeS:'26',sexoS:'Masculino',
-     descS:'1,75m, tatuagem cobra no pescoço esq., cabelo raspado',
-     antS:'Passagens por homicídio e tráfico.',foto:null,
-     sitSuspeito:'Em fuga',mand:'MP-2024/00332',fase:'Relatório final elaborado',
-     delegado:'Dr. Marcos Lima',inv:'Ag. Carla Menezes',obs:'Câmeras mostram dois atiradores.',criadoEm:new Date().toISOString()},
-    {id:'HC-EX003',data:'2024-04-05',hora:'20:20',bo:'2024/041012',unidade:'DEH Contagem',
-     endereco:'Rua das Mangueiras, 204',bairro:'Sede',tlocal:'Residência',lat:-19.922,lng:-44.049,
-     vitima:'Ana Paula Rodrigues',idade:'28',sexo:'Feminino',raca:'Parda',
-     meio:'Arma branca — faca',motivacao:'Violência doméstica / feminicídio',
-     status:'preso',suspeito:'José Rodrigues (companheiro)',idadeS:'33',sexoS:'Masculino',cpfS:'987.654.321-00',
-     descS:'1,70m, barba, tatuagem âncora antebraço dir.',antS:'Passagem por lesão corporal 2022',foto:null,
-     sitSuspeito:'Preso preventivamente',mand:'MP-2024/00418',fase:'Denúncia oferecida',
-     delegado:'Dr. Marcos Lima',inv:'Ag. Renata Souza',obs:'Feminicídio. Autor confessou.',criadoEm:new Date().toISOString()}
+    {id:'HC-EX001',data:'2024-02-14',hora:'23:10',bo:'2024/020145',unidade:'DEH Contagem',endereco:'Rua Ametista, 78',aisp:'AISP 49',bairro:'Ressaca',tlocal:'Via pública',lat:-19.951,lng:-44.078,vitima:'Não identificado',idade:'',sexo:'Masculino',raca:'Parda',antv:'Possível envolvimento com tráfico',meio:'Arma de fogo — pistola',motivacao:'Disputa territorial / facção',motivdet:'Região de disputa entre grupos rivais',faccao:'A esclarecer',disp:'4 disparos',cam:'Sim — sem imagens',vei:'Moto preta sem placa',status:'sem_suspeito',suspeito:'',qualS:'',foto:null,sitSuspeito:'',mand:'',fase:'Inquérito em andamento',delegado:'Dr. Marcos Lima',inv:'Ag. Renata Souza',test:'2 testemunhas hostis',obs:'Corpo encontrado por moradores.',criadoEm:new Date().toISOString()},
+    {id:'HC-EX002',data:'2024-03-22',hora:'01:40',bo:'2024/033298',unidade:'DEH Contagem',endereco:'Av. Rui Barbosa, esq. R. das Flores',aisp:'AISP 06',bairro:'Eldorado',tlocal:'Via pública',lat:-19.928,lng:-44.062,vitima:'Reginaldo F. dos Santos',idade:'31',sexo:'Masculino',raca:'Parda',antv:'Passagens por tráfico',meio:'Arma de fogo — revólver',motivacao:'Execução / queima de arquivo',motivdet:'',faccao:'Bonde dos 40',disp:'7 disparos',cam:'Sim — imagens obtidas',vei:'VW Gol branco BHM-2244',status:'com_suspeito',suspeito:'Marcelo "Magrão" Alves',idadeS:'26',sexoS:'Masculino',qualS:'Qualificado',descS:'1,75m, tatuagem cobra no pescoço esq., cabelo raspado',antS:'Passagens por homicídio e tráfico.',foto:null,sitSuspeito:'Em fuga',mand:'MP-2024/00332',fase:'Relatório final elaborado',delegado:'Dr. Marcos Lima',inv:'Ag. Carla Menezes',test:'',obs:'Câmeras mostram dois atiradores.',criadoEm:new Date().toISOString()},
+    {id:'HC-EX003',data:'2024-04-05',hora:'20:20',bo:'2024/041012',unidade:'DEH Contagem',endereco:'Rua das Mangueiras, 204',aisp:'AISP 06',bairro:'Sede',tlocal:'Residência',lat:-19.922,lng:-44.049,vitima:'Ana Paula Rodrigues',idade:'28',sexo:'Feminino',raca:'Parda',antv:'',meio:'Arma branca — faca',motivacao:'Violência doméstica / feminicídio',motivdet:'Relacionamento abusivo prévio',faccao:'',disp:'',cam:'Não há',vei:'',status:'preso',suspeito:'José Rodrigues (companheiro)',idadeS:'33',sexoS:'Masculino',cpfS:'987.654.321-00',qualS:'Qualificado',descS:'1,70m, barba, tatuagem âncora antebraço dir.',antS:'Passagem por lesão corporal 2022',foto:null,sitSuspeito:'Preso em flagrante (APFD)',mand:'MP-2024/00418',fase:'Denúncia oferecida',delegado:'Dr. Marcos Lima',inv:'Ag. Renata Souza',test:'Vizinhos ouviram gritos.',obs:'Feminicídio. Autor confessou.',criadoEm:new Date().toISOString()},
+    {id:'HC-EX004',data:'2024-05-18',hora:'15:30',bo:'2024/051877',unidade:'DEH Contagem',endereco:'Rua do Comércio, 55',aisp:'AISP 49',bairro:'Nacional',tlocal:'Estabelecimento comercial',lat:-19.912,lng:-44.070,vitima:'Carlos Eduardo Pinto',idade:'42',sexo:'Masculino',raca:'Branca',antv:'Sem antecedentes',meio:'Arma de fogo — pistola',motivacao:'Latrocínio',motivdet:'Assalto a comércio',faccao:'',disp:'2 disparos',cam:'Sim — imagens obtidas',vei:'',status:'preso',suspeito:'Anderson Lopes',idadeS:'24',sexoS:'Masculino',qualS:'Qualificado',descS:'1,80m, magro',antS:'Roubo (2021, 2023)',foto:null,sitSuspeito:'Preso preventivamente',mand:'MP-2024/00521',fase:'Em julgamento',delegado:'Dra. Helena Costa',inv:'Ag. Paulo Dias',test:'Funcionário do comércio',obs:'Identificado por câmeras.',criadoEm:new Date().toISOString()}
   ];
   salvar();
 }
 
-// ══ INIT ══════════════════════════════════════════════════════════════
-// Ajusta altura do mapa
-var mapDiv = document.getElementById('map');
-mapDiv.style.position = 'absolute';
-mapDiv.style.inset = '0';
-
-renderStats();
+// ══ INIT ══
 renderLista();
-
-// Inicia carregamento do Leaflet
 tentarCarregarMapa();
+popularFiltrosGeo();
+window.addEventListener('resize',function(){if(map)map.invalidateSize()});
+// Em telas pequenas, inicia com sidebar recolhida pra mostrar o mapa
+if(window.innerWidth<=760){sidebarCollapsed=true;document.getElementById('sidebar').classList.add('collapsed');document.getElementById('toggle-sidebar').textContent='☰'}
 </script>
 </body>
 </html>
